@@ -1,0 +1,32 @@
+name: Populate disc
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout 🛎️
+        uses: actions/checkout@v2.3.1
+        with:
+          submodules: true  # Fetch Hugo themes
+      - name: Install worldcrab from git 🦀️
+        run: cargo install --git https://github.com/kalikiana/worldcrab
+      - name: Prepare posts ✍️
+        run: |
+          worldcrab disc
+          ln -s disc/content content
+          sed -i s@.Permalink@.Params.original_link@ themes/beautifulhugo/layouts/partials/*.html
+      - name: Setup Hugo 🐹️
+        uses: peaceiris/actions-hugo@v2
+      - name: Render blog 💇️
+        run: hugo --minify
+      - name: Update gh-pages 🚀
+        uses: JamesIves/github-pages-deploy-action@4.1.6
+        if: ${{ github.ref == 'refs/heads/main' }}
+        with:
+          branch: gh-pages # The branch the action should deploy to.
+          folder: public # The folder the action should deploy.
